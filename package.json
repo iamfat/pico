@@ -1,0 +1,15 @@
+{
+  "name": "pico",
+  "version": "1.0.0",
+  "description": "Light-weight AMD JS loader for specific scene.",
+  "main": "lib/index.js",
+  "author": "iamfat@gmail.com",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^1.21.4",
+    "rollup-plugin-terser": "^5.1.2"
+  },
+  "scripts": {
+    "build": "rollup -c"
+  }
+}
