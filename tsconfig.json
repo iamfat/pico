@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "outDir": "lib",
+        "module": "commonjs",
+        "target": "es6",
+        "noImplicitAny": false,
+        "rootDir": "./src",
+        "allowSyntheticDefaultImports": true,
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
