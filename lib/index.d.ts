@@ -1,4 +1,4 @@
-declare function define(name: any, deps: any, factory: any): void;
+declare function define(name: any, deps: any, factory?: any): void;
 declare namespace define {
     var amd: {
         pico: boolean;

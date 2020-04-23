@@ -1,7 +1,7 @@
 const global = window as any;
 const loadedModules = [] as any;
 
-function define(name, deps, factory) {
+function define(name, deps, factory?) {
   //Allow for anonymous modules
   if (typeof name !== "string") {
     //Adjust args appropriately
