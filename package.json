@@ -1,6 +1,6 @@
 {
   "name": "@genee/pico",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Light-weight AMD JS loader for specific scene.",
   "main": "lib/index.js",
   "author": "iamfat@gmail.com",
