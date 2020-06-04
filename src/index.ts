@@ -24,7 +24,10 @@ define.amd = {
   pico: true,
 };
 
-function load(moduleUri: string) {
+function load(moduleUri: string | string[]) {
+  if (typeof moduleUri === "object" && moduleUri.length) {
+    return Promise.all(moduleUri.map((u) => load(u)));
+  }
   return new Promise((resolve, reject) => {
     if (!global.define) {
       global.define = define;
@@ -32,7 +35,7 @@ function load(moduleUri: string) {
       reject("Incompatible mix of defines found!");
     }
     // Create a script for feature detection & potentially loading with.
-    var script = document.createElement("script");
+    const script = document.createElement("script");
     if (typeof script.addEventListener !== "undefined") {
       script.addEventListener("load", () => {
         const module = loadedModules.pop();
@@ -64,7 +67,7 @@ function load(moduleUri: string) {
           resolve(module.factory);
         }
       });
-      script.src = moduleUri;
+      script.src = moduleUri as string;
       script.async = true;
       document.body.appendChild(script);
     } else {

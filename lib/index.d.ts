@@ -4,7 +4,7 @@ declare namespace define {
         pico: boolean;
     };
 }
-declare function load(moduleUri: string): Promise<unknown>;
+declare function load(moduleUri: string | string[]): any;
 declare const pico: {
     load: typeof load;
     define: typeof define;
