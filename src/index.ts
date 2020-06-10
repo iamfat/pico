@@ -1,79 +1,104 @@
 const global = window as any;
-const loadedModules = [] as any;
+const loadedDefs = {} as { [name: string]: any };
 
+let justLoaded: { name?: string; deps?: string[]; factory: any };
 function define(name, deps, factory?) {
-  //Allow for anonymous modules
-  if (typeof name !== "string") {
-    //Adjust args appropriately
-    factory = deps;
-    deps = name;
-    name = null;
-  }
+    //Allow for anonymous modules
+    if (typeof name !== 'string') {
+        //Adjust args appropriately
+        factory = deps;
+        deps = name;
+        name = undefined;
+    }
 
-  //This module may not have dependencies
-  if (deps instanceof Array === false) {
-    factory = deps;
-    deps = null;
-  }
+    //This module may not have dependencies
+    if (!Array.isArray(deps)) {
+        factory = deps;
+        deps = undefined;
+    }
 
-  loadedModules.push({ name, deps, factory });
+    if (name) {
+        loadedDefs[name] = { deps, factory };
+    } else {
+        justLoaded = { name, deps, factory };
+    }
 }
 
 // Define function complies with a basic subset of the AMD API
 define.amd = {
-  pico: true,
+    pico: true,
 };
 
-function load(...moduleUris: string[]) {
-  const promises = moduleUris.map((moduleUri) => {
-    return new Promise((resolve, reject) => {
-      if (!global.define) {
-        global.define = define;
-      } else if (!global.define.amd || !global.define.amd.pico) {
-        reject("Incompatible mix of defines found!");
-      }
-      // Create a script for feature detection & potentially loading with.
-      const script = document.createElement("script");
-      if (typeof script.addEventListener !== "undefined") {
-        script.addEventListener("load", () => {
-          const module = loadedModules.pop();
-          if (typeof module.factory === "function") {
-            if (module.deps instanceof Array) {
-              Promise.all(
-                module.deps.map((depName) => {
-                  const depModules = loadedModules.filter(
-                    ({ name }) => name === depName
-                  );
-                  if (depModules.length === 0) {
-                    return load(depName);
-                  } else {
-                    const module = depModules[0];
-                    if (typeof module.factory === "function") {
-                      return module.factory();
+function _load(...names: string[]) {
+    let promise = Promise.resolve(true);
+    let modules: any[] = [];
+    names.forEach((name) => {
+        promise = promise.then(
+            () =>
+                new Promise((resolve, reject) => {
+                    if (loadedDefs[name]) {
+                        const def = loadedDefs[name];
+                        if (typeof def.factory === 'function') {
+                            let depPromise = Promise.resolve(true);
+                            let depModules: any[] = [];
+                            def.deps &&
+                                def.deps.forEach((dep) => {
+                                    depPromise = depPromise.then<any>(() =>
+                                        _load(dep).then((m) => {
+                                            depModules.push(m);
+                                        }),
+                                    );
+                                });
+                            depPromise
+                                .then(() => {
+                                    modules.push((def.factory = def.factory(...depModules)));
+                                    resolve();
+                                })
+                                .catch(reject);
+                        } else {
+                            modules.push(def.factory);
+                            resolve();
+                        }
                     } else {
-                      return module.factory;
+                        // Create a script for feature detection & potentially loading with.
+                        const script = document.createElement('script');
+                        if (typeof script.addEventListener !== 'undefined') {
+                            script.addEventListener('load', () => {
+                                if (justLoaded === undefined) {
+                                    reject(`${name} was loaded but no define()!`);
+                                }
+                                loadedDefs[name] = justLoaded;
+                                justLoaded = undefined;
+                                _load(name)
+                                    .then((m) => {
+                                        modules.push(m);
+                                        resolve();
+                                    })
+                                    .catch(reject);
+                            });
+                            script.src = name;
+                            script.async = true;
+                            document.body.appendChild(script);
+                        } else {
+                            reject('Your browser is too OLD to run "pico" loader');
+                        }
                     }
-                  }
-                })
-              ).then((depModules) => {
-                resolve(module.factory(...depModules));
-              });
-            } else {
-              resolve(module.factory());
-            }
-          } else {
-            resolve(module.factory);
-          }
-        });
-        script.src = moduleUri as string;
-        script.async = true;
-        document.body.appendChild(script);
-      } else {
-        reject('Your browser is too OLD to run "pico" loader');
-      }
+                }),
+        );
     });
-  });
-  return promises.length > 1 ? Promise.all(promises) : promises[0];
+
+    return promise.then(() => {
+        return modules.length > 1 ? modules : modules[0];
+    });
+}
+
+function load(...names) {
+    if (!global.define) {
+        global.define = define;
+    } else if (!global.define.amd || !global.define.amd.pico) {
+        throw new Error('Incompatible mix of defines found!');
+    }
+    return _load(...names);
 }
 
 const pico = { load, define };

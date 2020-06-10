@@ -15,9 +15,10 @@ export default {
   output: [
     {
       name: "pico",
-      dir: 'lib',
+      dir: "lib",
       format: "cjs",
       exports: "named",
+      sourcemap: true,
     },
   ],
   external,
