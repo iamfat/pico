@@ -12,7 +12,7 @@ import { define, load } from 'pico'
 define('YOUR_DEP_NAME1', YOUR_DEP_MODULE1)
 define('YOUR_DEP_NAME2', YOUR_DEP_MODULE2)
 // load some of your modules from browser-side
-load([ 'url1', 'url2' ]).then((module1, module2) => {
+load('url1', 'url2').then(([module1, module2]) => {
     
 })
 ```
