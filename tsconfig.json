@@ -1,12 +1,9 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "outDir": "lib",
-        "module": "commonjs",
+        "module": "es6",
         "target": "es6",
         "noImplicitAny": false,
         "rootDir": "./src",
-        "allowSyntheticDefaultImports": true,
     },
     "include": [
         "src/**/*"
