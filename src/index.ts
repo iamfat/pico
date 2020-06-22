@@ -3,7 +3,6 @@ const loadedDefs = {} as { [name: string]: { deps: string[]; factory: any; src: 
 const loadListeners = {} as { [name: string]: Function[] };
 const loadedScripts = {} as { [name: string]: boolean };
 
-let justLoaded: { name?: string; src?: string };
 function define(name, deps, factory?) {
     //Allow for anonymous modules
     if (typeof name !== 'string') {
@@ -40,6 +39,11 @@ function _load(...names: string[]) {
     let promises = names.map(
         (name) =>
             new Promise((resolve, reject) => {
+                if (name.charAt(0) === '!') {
+                    name = name.slice(1);
+                    delete loadedDefs[name];
+                    delete loadedScripts[name];
+                }
                 if (loadedDefs[name]) {
                     const def = loadedDefs[name];
                     if (typeof def.factory === 'function') {
@@ -72,7 +76,6 @@ function _load(...names: string[]) {
                                 reject(`module:${name} missing!`);
                             }
                             _load(defName).then(resolve).catch(reject);
-                            justLoaded = undefined;
                         });
                         script.src = name;
                         script.async = true;
@@ -97,6 +100,4 @@ function load(...names) {
     return _load(...names);
 }
 
-const pico = { load, define };
 export { load, define };
-export default pico;

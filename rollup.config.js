@@ -29,6 +29,6 @@ export default [
             sourcemap: true,
         },
         external,
-        plugins: [typescript(), terser()],
+        plugins: [typescript()],
     },
 ];
