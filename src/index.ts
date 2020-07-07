@@ -1,5 +1,5 @@
 const global = window as any;
-const loadedDefs = {} as { [name: string]: { deps: string[]; factory: any; src: string } };
+const parsedDefs = {} as { [name: string]: { deps: string[]; factory: any; src: string; loaded: boolean } };
 const loadListeners = {} as { [name: string]: Function[] };
 const loadedScripts = {} as { [name: string]: boolean };
 
@@ -22,7 +22,7 @@ function define(name, deps, factory?) {
 
     name = name || src;
     if (name) {
-        loadedDefs[name] = { deps, factory, src };
+        parsedDefs[name] = { deps, factory, src, loaded: false };
         if (loadListeners[name]) {
             loadListeners[name].map((l) => l());
             delete loadListeners[name];
@@ -41,12 +41,14 @@ function _load(...names: string[]) {
             new Promise((resolve, reject) => {
                 if (name.charAt(0) === '!') {
                     name = name.slice(1);
-                    delete loadedDefs[name];
+                    delete parsedDefs[name];
                     delete loadedScripts[name];
                 }
-                if (loadedDefs[name]) {
-                    const def = loadedDefs[name];
-                    if (typeof def.factory === 'function') {
+                if (parsedDefs[name]) {
+                    const def = parsedDefs[name];
+                    if (def.loaded) {
+                        resolve(def.factory);
+                    } else if (typeof def.factory === 'function') {
                         let depPromise;
                         if (def.deps) {
                             depPromise = _load(...def.deps);
@@ -56,10 +58,13 @@ function _load(...names: string[]) {
                         depPromise
                             .then((depModules) => {
                                 if (!Array.isArray(depModules)) depModules = [depModules];
-                                resolve((def.factory = def.factory(...depModules)));
+                                def.factory = def.factory(...depModules);
+                                def.loaded = true;
+                                resolve(def.factory);
                             })
                             .catch(reject);
                     } else {
+                        def.loaded = true;
                         resolve(def.factory);
                     }
                 } else if (/^\w+$/.test(name)) {
@@ -71,7 +76,7 @@ function _load(...names: string[]) {
                     const script = document.createElement('script');
                     if (typeof script.addEventListener !== 'undefined') {
                         script.addEventListener('load', () => {
-                            const defName = Object.keys(loadedDefs).find((k) => loadedDefs[k].src === script.src);
+                            const defName = Object.keys(parsedDefs).find((k) => parsedDefs[k].src === script.src);
                             if (defName === undefined) {
                                 reject(`module:${name} missing!`);
                             }
