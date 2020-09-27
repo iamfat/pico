@@ -36,62 +36,62 @@ define.amd = {
 };
 
 function _load(...names: string[]) {
-    let promises = names.map(
-        (name) =>
-            new Promise((resolve, reject) => {
-                if (name.charAt(0) === '!') {
-                    name = name.slice(1);
-                    delete parsedDefs[name];
-                    delete loadedScripts[name];
+    let promises = names.map((name) => {
+        return new Promise((resolve, reject) => {
+            if (name.charAt(0) === '!') {
+                name = name.slice(1);
+                delete parsedDefs[name];
+                delete loadedScripts[name];
+            }
+            if (parsedDefs[name]) {
+                const def = parsedDefs[name];
+                if (def.loaded) {
+                    resolve(def.factory);
+                } else if (typeof def.factory === 'function') {
+                    let depPromise;
+                    if (def.deps) {
+                        depPromise = _load(...def.deps);
+                    } else {
+                        depPromise = Promise.resolve([]);
+                    }
+                    depPromise
+                        .then((depModules) => {
+                            if (!Array.isArray(depModules)) depModules = [depModules];
+                            def.factory = def.factory(...depModules);
+                            def.loaded = true;
+                            resolve(def.factory);
+                        })
+                        .catch(reject);
+                } else {
+                    def.loaded = true;
+                    resolve(def.factory);
                 }
-                if (parsedDefs[name]) {
-                    const def = parsedDefs[name];
-                    if (def.loaded) {
-                        resolve(def.factory);
-                    } else if (typeof def.factory === 'function') {
-                        let depPromise;
-                        if (def.deps) {
-                            depPromise = _load(...def.deps);
-                        } else {
-                            depPromise = Promise.resolve([]);
+            } else if (/^\w+$/.test(name)) {
+                loadListeners[name] = loadListeners[name] || [];
+                loadListeners[name].push(() => {
+                    _load(name).then(resolve).catch(reject);
+                });
+            } else if (!loadedScripts[name]) {
+                const script = document.createElement('script');
+                if (typeof script.addEventListener !== 'undefined') {
+                    script.addEventListener('load', () => {
+                        const defName = Object.keys(parsedDefs).find((k) => parsedDefs[k].src === script.src);
+                        if (defName === undefined) {
+                            reject(`module:${name} missing!`);
                         }
-                        depPromise
-                            .then((depModules) => {
-                                if (!Array.isArray(depModules)) depModules = [depModules];
-                                def.factory = def.factory(...depModules);
-                                def.loaded = true;
-                                resolve(def.factory);
-                            })
-                            .catch(reject);
-                    } else {
-                        def.loaded = true;
-                        resolve(def.factory);
-                    }
-                } else if (/^\w+$/.test(name)) {
-                    loadListeners[name] = loadListeners[name] || [];
-                    loadListeners[name].push(() => {
-                        _load(name).then(resolve).catch(reject);
+                        _load(defName).then(resolve).catch(reject);
+                        document.body.removeChild(script);
                     });
-                } else if (!loadedScripts[name]) {
-                    const script = document.createElement('script');
-                    if (typeof script.addEventListener !== 'undefined') {
-                        script.addEventListener('load', () => {
-                            const defName = Object.keys(parsedDefs).find((k) => parsedDefs[k].src === script.src);
-                            if (defName === undefined) {
-                                reject(`module:${name} missing!`);
-                            }
-                            _load(defName).then(resolve).catch(reject);
-                        });
-                        script.src = name;
-                        script.async = true;
-                        document.body.appendChild(script);
-                        loadedScripts[name] = true;
-                    } else {
-                        reject('Your browser is too OLD to run "pico" loader');
-                    }
+                    script.src = name;
+                    script.async = true;
+                    document.body.appendChild(script);
+                    loadedScripts[name] = true;
+                } else {
+                    reject('Your browser is too OLD to run "pico" loader');
                 }
-            }),
-    );
+            }
+        });
+    });
 
     return promises.length > 1 ? Promise.all(promises) : promises[0];
 }
