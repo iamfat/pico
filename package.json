@@ -16,6 +16,6 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "test": "jasmine-browser-runner serve"
+    "test": "npm run build && jasmine-browser-runner serve"
   }
 }
