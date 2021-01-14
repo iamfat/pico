@@ -26,7 +26,7 @@ export default [
             file: 'lib/index.mjs',
             format: 'esm',
             exports: 'named',
-            sourcemap: true,
+            sourcemap: false,
         },
         external,
         plugins: [typescript()],
