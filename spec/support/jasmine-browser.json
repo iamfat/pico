@@ -1,0 +1,14 @@
+{
+    "srcDir": "lib",
+    "srcFiles": [
+        "index.browser.js"
+    ],
+    "specDir": "spec",
+    "specFiles": [
+        "**/*[Ss]pec.js"
+    ],
+    "helpers": [
+        "browser-helpers/**/*.js"
+    ],
+    "random": true
+}

@@ -12,12 +12,24 @@ export default [
         output: {
             name: 'pico',
             dir: 'lib',
-            format: 'cjs',
+            format: 'umd',
             exports: 'named',
             sourcemap: true,
         },
         external,
         plugins: [typescript({ outDir: 'lib', declaration: true }), terser()],
+    },
+    {
+        input: 'src/index.ts',
+        output: {
+            name: 'pico',
+            file: 'lib/index.browser.js',
+            format: 'umd',
+            exports: 'named',
+            sourcemap: true,
+        },
+        external,
+        plugins: [typescript(), terser()],
     },
     {
         input: 'src/index.ts',

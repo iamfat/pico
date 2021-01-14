@@ -27,7 +27,7 @@ function getModuleSrc(name: string): string {
 
 function define(name, deps, factory?) {
     //Allow for anonymous modules
-    if (isString(name)) {
+    if (!isString(name)) {
         //Adjust args appropriately
         factory = deps;
         deps = name;
@@ -35,7 +35,7 @@ function define(name, deps, factory?) {
     }
 
     //This module may not have dependencies
-    if (isArray(deps)) {
+    if (!isArray(deps)) {
         factory = deps;
         deps = undefined;
     }
@@ -85,7 +85,7 @@ function _load(...names: string[]) {
                     }
                     depPromise
                         .then((depModules) => {
-                            if (!Array.isArray(depModules)) depModules = [depModules];
+                            if (!isArray(depModules)) depModules = [depModules];
                             def.factory = def.factory(...depModules);
                             def.loaded = true;
                             resolve(def.factory);
@@ -95,30 +95,33 @@ function _load(...names: string[]) {
                     def.loaded = true;
                     resolve(def.factory);
                 }
-            } else if (/^\w+$/.test(name)) {
-                loadListeners[name] = loadListeners[name] || [];
-                loadListeners[name].push(() => {
-                    _load(name).then(resolve).catch(reject);
-                });
-            } else if (!loadedScripts[name]) {
-                const script = document.createElement('script');
-                if (typeof script.addEventListener !== 'undefined') {
-                    script.addEventListener('load', () => {
-                        const defName = Object.keys(parsedDefs).find((k) => {
-                            return parsedDefs[k].src === script.src;
-                        });
-                        if (defName === undefined) {
-                            reject(`module:${name} missing!`);
-                        }
-                        _load(defName).then(resolve).catch(reject);
-                        document.body.removeChild(script);
+            } else {
+                const src = getModuleSrc(name);
+                if (/^\w+$/.test(src)) {
+                    loadListeners[name] = loadListeners[name] || [];
+                    loadListeners[name].push(() => {
+                        _load(name).then(resolve).catch(reject);
                     });
-                    script.src = getModuleSrc(name);
-                    script.async = true;
-                    document.body.appendChild(script);
-                    loadedScripts[name] = script.src;
-                } else {
-                    reject('Your browser is too OLD to run "pico" loader');
+                } else if (!loadedScripts[name]) {
+                    const script = document.createElement('script');
+                    if (script.addEventListener) {
+                        script.addEventListener('load', () => {
+                            const defName = Object.keys(parsedDefs).find((k) => {
+                                return parsedDefs[k].src === script.src;
+                            });
+                            if (defName === undefined) {
+                                reject(`module:${name} missing!`);
+                            }
+                            _load(defName).then(resolve).catch(reject);
+                            document.body.removeChild(script);
+                        });
+                        script.src = src;
+                        script.async = true;
+                        document.body.appendChild(script);
+                        loadedScripts[name] = script.src;
+                    } else {
+                        reject('Your browser is too OLD to run "pico" loader');
+                    }
                 }
             }
         });
@@ -128,7 +131,9 @@ function _load(...names: string[]) {
 }
 
 function require(deps, callback) {
-    _load(deps).then((m: any[]) => callback(...m));
+    _load(deps)
+        .then((m: any[]) => callback(...m))
+        .catch(() => {});
 }
 
 function init() {

@@ -3,3 +3,4 @@ node_modules/
 .prettierrc.js
 rollup.config.js
 tsconfig.json
+spec/
