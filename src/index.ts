@@ -63,6 +63,8 @@ define.amd = {
     pico: true,
 };
 
+const NAME_PATTERN = /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/;
+
 function _load(...names: string[]) {
     let promises = names.map((name) => {
         return new Promise((resolve, reject) => {
@@ -97,7 +99,7 @@ function _load(...names: string[]) {
                 }
             } else {
                 const src = getModuleSrc(name);
-                if (/^\w+$/.test(src)) {
+                if (NAME_PATTERN.test(src)) {
                     loadListeners[name] = loadListeners[name] || [];
                     loadListeners[name].push(() => {
                         _load(name).then(resolve).catch(reject);
@@ -133,7 +135,7 @@ function _load(...names: string[]) {
 function require(deps, callback) {
     _load(deps)
         .then((m: any[]) => callback(...m))
-        .catch(() => {});
+        .catch(() => { });
 }
 
 function init() {
