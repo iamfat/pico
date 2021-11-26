@@ -1,17 +1,17 @@
 {
   "name": "@genee/pico",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Light-weight AMD JS loader for specific scene.",
   "main": "lib/index",
   "author": "iamfat@gmail.com",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-typescript": "^4.0.0",
-    "jasmine": "^3.6.3",
-    "jasmine-browser-runner": "^0.3.0",
-    "rollup": "^2.3.2",
-    "rollup-plugin-terser": "^5.3.0",
-    "tslib": "^1.11.1",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "jasmine": "^3.10.0",
+    "jasmine-browser-runner": "^0.9.0",
+    "rollup": "^2.60.1",
+    "rollup-plugin-terser": "^7.0.2",
+    "tslib": "^2.3.1",
     "typescript": "^3.8.3"
   },
   "scripts": {
